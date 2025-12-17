@@ -71,7 +71,7 @@ export function useCanvasDrawing() {
         const h = (pb.y_max - pb.y_min) * scale;
 
         // Plate box
-        ctx.strokeStyle = "#00FF88";
+        ctx.strokeStyle = "#e9e9e9ff";
         ctx.lineWidth = 3;
         ctx.strokeRect(x, y, w, h);
 
@@ -85,7 +85,7 @@ export function useCanvasDrawing() {
         );
 
         // Characters
-        ctx.strokeStyle = "#FF66CC";
+        ctx.strokeStyle = "#c0c0c0ff";
         ctx.lineWidth = 1.5;
 
         plate.char_boxes?.forEach((cb) => {
