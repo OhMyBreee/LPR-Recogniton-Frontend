@@ -42,14 +42,20 @@ export function useSupabaseDetections() {
       plate_number: string;
       confidence: number;
       status: string;
-      time_taken: number;
+      time_ms: number;
     }) => {
       if (!user) return null;
 
-      const { data, error } = await supabase.from("detections").insert({
-        ...det,
+      const { data, error } = await supabase
+      .from("detections")
+      .insert({
+        plate_number: det.plate_number,
+        confidence: det.confidence,
+        status: det.status,
+        time_ms: det.time_ms,
         user_id: user.id,
-      });
+      })
+      .select();
 
       if (error) {
         console.error("Supabase insert error:", {

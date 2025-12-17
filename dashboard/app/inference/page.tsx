@@ -56,6 +56,7 @@ export default function LPRDashboard() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+
   // Clear response when switching tabs to avoid "ghost" boxes
   useEffect(() => {
     setResponse(null);
@@ -78,18 +79,46 @@ export default function LPRDashboard() {
   useEffect(() => {
     setMounted(true);
     fetchDetectionData();
-  }, [fetchDetectionData]);
+      }, [fetchDetectionData]);
 
-  // draw when response changes or image size changes
-  useEffect(() => {
-    if (!response) return;
+      // draw when response changes or image size changes
+      const waitForVideoReady = (video: HTMLVideoElement) =>
+      new Promise<void>((resolve) => {
+        if (video.videoWidth > 0) resolve();
+        else {
+          video.onloadedmetadata = () => resolve();
+        }
+      });
+      useEffect(() => {
+      const draw = async () => {
+        if (!response || !canvasRef.current) return;
 
-    if (activeTab === "upload" && uploadedImageRef.current && canvasRef.current) {
-      drawMultiPlateResults(canvasRef.current, uploadedImageRef.current, response.plates);
-    } else if (activeTab === "live" && videoRef.current && canvasRef.current) {
-      drawMultiPlateResults(canvasRef.current, videoRef.current, response.plates);
-    }
-  }, [response, drawMultiPlateResults, imageURL, activeTab]);
+        if (activeTab === "upload") {
+          if (!uploadedImageRef.current) return;
+
+          drawMultiPlateResults(
+            canvasRef.current,
+            uploadedImageRef.current,
+            response.plates
+          );
+        }
+
+        if (activeTab === "live") {
+          if (!videoRef.current) return;
+
+          await waitForVideoReady(videoRef.current); // ✅ allowed here
+
+          drawMultiPlateResults(
+            canvasRef.current,
+            videoRef.current,
+            response.plates
+          );
+        }
+      };
+
+      draw();
+    }, [response, activeTab, drawMultiPlateResults]);
+
 
   const dynamicStats = useMemo(() => {
     const totalRecent = recentDetections.length;
@@ -100,17 +129,17 @@ export default function LPRDashboard() {
   }, [recentDetections]);
 
   // map backend response to UI state for saving or display
-  const mapPlateToDetectedState = (plate: PlateResult): DetectedPlateState => {
-    const status = plate.plate_number === "Plate Not Found" || plate.plate_number.length === 0 ? "error" : "allowed";
-    return {
-      plate: plate.plate_number,
-      confidence: Math.round((plate.confidence ?? 90)), // backend may include confidence; otherwise random-ish
-      status,
-      time_taken_ms: response?.time_taken_ms,
-      plate_box: plate.plate_box ?? undefined,
-      char_boxes: plate.char_boxes ?? undefined,
-    };
-  };
+  // const mapPlateToDetectedState = (plate: PlateResult): DetectedPlateState => {
+  //   const status = plate.plate_number === "Plate Not Found" || plate.plate_number.length === 0 ? "error" : "allowed";
+  //   return {
+  //     plate: plate.plate_number,
+  //     confidence: Math.round((plate.confidence ?? 90)), // backend may include confidence; otherwise random-ish
+  //     status,
+  //     time_taken_ms: response?.time_taken_ms,
+  //     plate_box: plate.plate_box ?? undefined,
+  //     char_boxes: plate.char_boxes ?? undefined,
+  //   };
+  // };
 
   const { saveDetection } = useSupabaseDetections();
   // handle upload trigger
@@ -151,21 +180,31 @@ export default function LPRDashboard() {
   };
 
   const captureAndRecognize = async () => {
-    if (!videoRef.current) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext("2d");
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    if (video.videoWidth === 0) return;
+
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+
+    const ctx = tempCanvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.drawImage(videoRef.current, 0, 0);
+    ctx.drawImage(video, 0, 0);
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], "live_frame.jpg", { type: "image/jpeg" });
-      // Call recognize directly (does NOT save to Supabase)
-      await recognize(file);
-    }, "image/jpeg");
+    tempCanvas.toBlob(async (blob) => {
+    if (!blob) return;
+
+    const file = new File([blob], "live.jpg", { type: "image/jpeg" });
+    const res = await recognize(file);
+
+    if (res) {
+      setResponse(res); // 🔥 REQUIRED
+    }
+  }, "image/jpeg");
+
   };
 
   const startCamera = async () => {
@@ -277,8 +316,8 @@ export default function LPRDashboard() {
 
               <div className="p-6">
                 {activeTab === "live" ? (
-                  <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden border border-slate-700">
-                    <video ref={videoRef} className="w-full h-full object-contain" muted playsInline />
+                  <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden border border-slate-700 aspect-video p-2">
+                    <video ref={videoRef} className="w-full h-full object-cover" muted playsInline autoPlay/>
                     <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
                     <div className="absolute top-4 right-4 bg-red-500 text-white px-2 py-1 text-xs rounded animate-pulse">
                       LIVE

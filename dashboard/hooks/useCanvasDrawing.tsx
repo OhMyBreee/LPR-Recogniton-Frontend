@@ -2,79 +2,112 @@
 "use client";
 
 import { useCallback } from "react";
-import type { PlateResult, BoundingBox } from "@/types/lpr";
+import type { PlateResult } from "@/types/lpr";
 
 /**
- * drawMultiPlateResults:
- * - canvas: the canvas element
- * - imageEl: the displayed image element (used to compute scaling)
- * - plates: array of PlateResult from backend
+ * drawMultiPlateResults
  *
- * Important: char_boxes are relative to plate crop (top-left (0,0) is plate crop origin).
- * This function maps char boxes back to the full image coordinates and scales to displayed size.
+ * - canvas: overlay canvas
+ * - imageEl: HTMLImageElement (upload) OR HTMLVideoElement (live)
+ * - plates: backend detection results
+ *
+ * Assumptions:
+ * - plate_box coords are ABSOLUTE pixel coords in model input space
+ * - char_boxes coords are RELATIVE to plate crop
  */
 export function useCanvasDrawing() {
   const drawMultiPlateResults = useCallback(
-    (canvas: HTMLCanvasElement | null, imageEl: HTMLImageElement | HTMLVideoElement | null, plates: PlateResult[] | null) => {
-      if (!canvas || !imageEl) return;
+    (
+      canvas: HTMLCanvasElement | null,
+      imageEl: HTMLImageElement | HTMLVideoElement | null,
+      plates: PlateResult[] | null
+    ) => {
+      if (!canvas || !imageEl || !plates || plates.length === 0) return;
+
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Use displayed dimensions for canvas (so overlay matches CSS layout)
-      const displayW = imageEl.clientWidth;
-      const displayH = imageEl.clientHeight;
+      // ==============================
+      // 1️⃣ Get DISPLAY size
+      // ==============================
+      const rect = imageEl.getBoundingClientRect();
+      const displayW = rect.width;
+      const displayH = rect.height;
 
+      if (!displayW || !displayH) return;
+
+      // Canvas must match what user sees
       canvas.width = displayW;
       canvas.height = displayH;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (!plates || plates.length === 0) return;
-
-      // We assume backend coordinates are in image-original pixel space.
-      // To scale, we need original image natural size
-      let origW = 0;
-      let origH = 0;
+      // ==============================
+      // 2️⃣ Get SOURCE size (model space)
+      // ==============================
+      let sourceW = 0;
+      let sourceH = 0;
 
       if (imageEl instanceof HTMLImageElement) {
-        origW = imageEl.naturalWidth;
-        origH = imageEl.naturalHeight;
-      } else if (imageEl instanceof HTMLVideoElement) {
-        origW = imageEl.videoWidth;
-        origH = imageEl.videoHeight;
+        sourceW = imageEl.naturalWidth;
+        sourceH = imageEl.naturalHeight;
+      } else {
+        sourceW = imageEl.videoWidth;
+        sourceH = imageEl.videoHeight;
       }
 
-      if (!origW || !origH) return;
+      if (!sourceW || !sourceH) return;
 
-      const scaleX = displayW / origW;
-      const scaleY = displayH / origH;
+      // ==============================
+      // 3️⃣ Scaling factors
+      // ==============================
+      const scaleX = displayW / sourceW;
+      const scaleY = displayH / sourceH;
 
+      // Clear previous frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // ==============================
+      // 4️⃣ Draw plates
+      // ==============================
       plates.forEach((plate, pIndex) => {
         const pb = plate.plate_box;
         if (!pb) return;
 
-        // draw plate outer box
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#00FF88";
-        const px = pb.x1 * scaleX;
-        const py = pb.y1 * scaleY;
-        const pw = (pb.x2 - pb.x1) * scaleX;
-        const ph = (pb.y2 - pb.y1) * scaleY;
-        ctx.strokeRect(px, py, pw, ph);
+        // Plate box (ABSOLUTE → SCALED)
+        const x1 = pb.x_min * scaleX;
+        const y1 = pb.y_min * scaleY;
+        const w = (pb.x_max - pb.x_min) * scaleX;
+        const h = (pb.y_max - pb.y_min) * scaleY;
 
-        // plate label
+        // Plate rectangle
+        ctx.strokeStyle = "#00FF88";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x1, y1, w, h);
+
+        // Label
         ctx.fillStyle = "#00FF88";
         ctx.font = "14px Arial";
-        ctx.fillText(`${pIndex + 1}: ${plate.plate_number}`, px + 4, py + 16);
+        ctx.fillText(
+          `${pIndex + 1}: ${plate.plate_number ?? ""}`,
+          x1 + 4,
+          Math.max(14, y1 - 6)
+        );
 
-        // draw char boxes: they are relative to crop; map to full image then scale
-        ctx.lineWidth = 1.5;
+        // ==============================
+        // 5️⃣ Draw character boxes
+        // ==============================
         ctx.strokeStyle = "#FF66CC";
-        plate.char_boxes?.forEach((cb: BoundingBox) => {
-          // char coords relative to plate crop; convert to full-image coords
-          const cx = (pb.x1 + cb.x1) * scaleX;
-          const cy = (pb.y1 + cb.y1) * scaleY;
-          const cw = (cb.x2 - cb.x1) * scaleX;
-          const ch = (cb.y2 - cb.y1) * scaleY;
+        ctx.lineWidth = 1.5;
+
+        plate.char_boxes?.forEach((cb) => {
+          const cx =
+            (pb.x_min + cb.x_min) * scaleX;
+          const cy =
+            (pb.y_min + cb.y_min) * scaleY;
+          const cw =
+            (cb.x_max - cb.x_min) * scaleX;
+          const ch =
+            (cb.y_max - cb.y_min) * scaleY;
+
           ctx.strokeRect(cx, cy, cw, ch);
         });
       });

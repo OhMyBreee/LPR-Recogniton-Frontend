@@ -1,8 +1,8 @@
 export interface BoundingBox {
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
+    x_min: number;
+    y_min: number;
+    x_max: number;
+    y_max: number;
 }
 
 export interface PlateResult {
