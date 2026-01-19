@@ -26,8 +26,8 @@ const ReviewCard = ({
   }
   className={cn(
   "flex items-center gap-3 px-2 md:px-3 lg:px-5 py-1 md:py-1 rounded-full cursor-pointer transition-all duration-300",
-  "backdrop-blur-xl bg-foreground/10 border border-white/30 shadow text-xs md:text-sm lg:text-base text-foreground",
-  "hover:bg-white/20 hover:scale-[1.04] hover:shadow-[0_0_25px_#FFA50040]"
+  "backdrop-blur-xl bg-transparent border border-foreground/30 shadow text-xs md:text-sm lg:text-base text-foreground",
+  "hover:bg-foreground/10 hover:scale-[1.04] hover:shadow-[0_0_25px_#FFA50040]"
 )}
 >
   <figcaption className="capitalize whitespace-nowrap md:whitespace-normal">{name}</figcaption>
@@ -40,7 +40,7 @@ export default function Madeby() {
   return (
     <section
       id="skills"
-      className=" text-white max-w-[150px] md:max-w-[400px] lg:max-w-[600px]"
+      className=" text-foreground max-w-[150px] md:max-w-[400px] lg:max-w-[600px]"
     >
       <div className="relative flex w-full flex-col items-center justify-center overflow-hidden
       [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] ">
