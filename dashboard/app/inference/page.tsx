@@ -132,8 +132,6 @@ export default function LPRDashboard() {
       (d) => d.status === "success"
     );
 
-    const platesDetected = recentDetections.filter((d) => d.status === "success").length;
-
     const avgConfidence =
       successful.length > 0
         ? successful.reduce(
@@ -141,10 +139,10 @@ export default function LPRDashboard() {
             0
           ) / successful.length
         : 0;
-
+    const length = successful.length;
     return {
       avgConfidence: Number(avgConfidence.toFixed(1)),
-      platesDetected,
+      length,
     };
   }, [recentDetections]);
 
@@ -293,7 +291,7 @@ export default function LPRDashboard() {
                 <div>
                   <p className="text-foreground text-sm">Plates Detected</p>
                   <p className="text-2xl font-bold text-foreground mt-1">
-                    {mounted ? dynamicStats.platesDetected : 0}
+                    {mounted ? dynamicStats.length : 0}
                   </p>
                 </div>
               </div>
@@ -312,7 +310,7 @@ export default function LPRDashboard() {
                     }`}
                 >
                   <Camera className="w-4 h-4 inline mr-2" />
-                  Live Camera (Mock)
+                  Live Camera
                 </button>
 
                 <button
