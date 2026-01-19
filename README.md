@@ -22,9 +22,8 @@ This project uses the **Indonesian License Plate Dataset** created by **Juan Tho
 📌 **Dataset Link:**  
 https://www.kaggle.com/datasets/juanthomaswijaya/indonesian-license-plate-dataset
 
-### ✔️ Attribution  
-This dataset is **NOT** owned by the authors of this repository.  
-Full credit to **Juan Thomas Wijaya**, the dataset creator and uploader on Kaggle.
+### ✔️ Backend Link
+https://github.com/OhMyBreee/Plate-Recognition
 
 ---
 
