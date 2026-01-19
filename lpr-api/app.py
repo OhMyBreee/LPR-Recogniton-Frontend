@@ -101,8 +101,8 @@ async def recognize(file: UploadFile = File(...)):
         # Crop plate region
         cropped_plate = img_cv2[y1:y2, x1:x2]
 
-        # Optional Debug Save
-        cv2.imwrite(f"debug_plate_{idx+1}.jpg", cropped_plate)
+        # # Optional Debug Save
+        # cv2.imwrite(f"debug_plate_{idx+1}.jpg", cropped_plate)
 
         # ---------------------------
         # Detect characters on plate
