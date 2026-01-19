@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Navbar from "@/components/navbar"
-import Hero from "@/components/hero"
 import DotAnimation from "@/components/dot-animation"
 import { Type_writer_hero } from '@/components/type-writer-hero'
 import { Button } from "@/components/ui/button"
@@ -16,12 +15,12 @@ export default function LPRDashboard() {
       <header className="lg:px-16 py-4 w-full backdrop-blur-sm top-0 z-10 sticky">
         <Navbar />
       </header>
-      <div className='w-full min-h-[calc(100vh-4rem-40px)] flex justify-center items-center relative' id = "hero">
-        <DotAnimation></DotAnimation>
+      <div className='w-full min-h-[calc(100vh-4rem-36px)] flex justify-center items-center relative' id = "hero">
+        <DotAnimation ></DotAnimation>
         <div className='flex flex-col w-fit h-max items-center justify-center gap-4 px-3 py-3'>
           <Type_writer_hero></Type_writer_hero>
           <div className = "flex flex gap-x-4">
-            <Button variant = "outline" size="sm" className = "text-foreground">
+            <Button variant = "outline" size="sm" className = "text-foreground bg-background">
               <Link href="/inference" className='flex w-fit space-x-3 items-center justify-center'>
                 <div>Try Now!</div><MousePointer2/>
               </Link>
