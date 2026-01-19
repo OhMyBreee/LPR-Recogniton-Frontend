@@ -58,17 +58,11 @@ export default function Navbar() {
           <NavigationMenuList className="flex-wrap text-foreground">
 
             <NavigationMenuItem>
-              <NavigationMenuTrigger>Inference</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="gap-2 py-2 px-2">
-                  <ListItem href="/inference" title="Introduction">
-                    Re-usable components built using Radix UI and Tailwind CSS.
-                  </ListItem>
-                  <ListItem href="/inference" title="Installation">
-                    How to install dependencies and structure your app.
-                  </ListItem>
-                </ul>
-              </NavigationMenuContent>
+              <Button variant = "ghost">
+                <Link href = "/inference">
+                  Inference
+                </Link>
+              </Button>
             </NavigationMenuItem>
 
             <NavigationMenuItem>
